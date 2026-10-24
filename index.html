@@ -118,6 +118,13 @@ main{min-height:60vh}
 .card .info{padding:12px 14px 16px; display:grid; gap:4px; min-width:0}
 .card .nm{font-size:14px; font-weight:700; line-height:1.3}
 .card .price{font-size:18px; font-weight:900}
+.pre-badge{position:absolute; top:10px; left:10px; padding:4px 10px; border-radius:999px; background:var(--plum); color:var(--plum-ink); font-size:12px; font-weight:800; letter-spacing:.02em}
+.pre-badge.out{background:var(--gray-soft); color:var(--muted)}
+.old-price{font-weight:600; font-size:.78em; color:var(--muted); margin-left:4px}
+.card .ship{font-size:12px; font-weight:700; color:var(--accent-text)}
+.pre-box{margin:14px 0 0; padding:12px 14px; border-radius:var(--r-md); background:var(--soft); font-size:14px; display:grid; gap:2px}
+.pre-box b{color:var(--accent-text)}
+.ci small.pre{display:block; color:var(--accent-text); font-weight:700}
 .fav{position:absolute; top:10px; right:10px; width:38px; height:38px; border-radius:50%; border:0; background:rgba(255,255,255,.92); color:#C24F78; display:grid; place-items:center; cursor:pointer; box-shadow:0 2px 8px rgba(160,70,110,.18)}
 .fav .ico{width:20px; height:20px}
 .fav[aria-pressed="true"] .ico{fill:#DE6A91; stroke:#DE6A91}
@@ -537,7 +544,7 @@ const API_BASE = 'https://api.luchikki.store';
    (worker/src/catalog.ts). Если сервер подключён, витрина сама подтянет оттуда цены.
    Раздел без товаров на витрине не показывается. */
 const CATS = {
-  keychains:{ title:'Брелоки', subs:{ acrylic:'Акриловые брелоки' } },
+  keychains:{ title:'Брелоки', subs:{ pudding:'Брелоки-пудинги', acrylic:'Акриловые брелоки' } },
   stickers: { title:'Стикеры', subs:{ stickerpack:'Стикерпаки' } },
   prints:   { title:'Принты и постеры', subs:{ print:'Принты', poster:'Постеры' } }
 };
@@ -548,43 +555,95 @@ const FANDOMS = {
   nekopara: { name:'Nekopara',     cover:'img/stickers-vanilla-2.jpg' },
   pusheen:  { name:'Pusheen',      cover:'img/stickers-pusheen-1.jpg' },
   frieren:  { name:'Фрирен',       cover:'img/stickers-frieren-1.jpg' },
+  cyberpunk:{ name:'Cyberpunk: Edgerunners', cover:'img/stickers-cyberpunk-1.jpg' },
+  chobits:  { name:'Chobits',      cover:'img/stickers-chii-1.jpg' },
+  apothecary:{ name:'Монолог фармацевта', cover:'img/stickers-apothecary-1.jpg' },
   brawl:    { name:'Brawl Stars',  cover:'img/keychain-brawl-cat-1.jpg' }
 };
 
 /* specs — характеристики [название, значение]; пустые не показываются.
-   images — фото по порядку: первое идёт на карточку. fandom — ключ из FANDOMS. */
+   images — фото по порядку: первое идёт на карточку. fandom — ключ из FANDOMS.
+   preorder — товар по предзаказу: preorder:{shipFrom:'с 20 ноября', limit:30, regularPrice:500}
+     regularPrice — цена после предзаказа: покажется зачёркнутой рядом с ценой предзаказа
+   stock — сколько штук в наличии: stock:{qty:10} (точный остаток сайт берёт с сервера, worker/src/catalog.ts)
+     (то же самое нужно вписать в worker/src/catalog.ts — сервер следит за тиражом). */
 const PRODUCTS = [
+  { id:'k-chocola-pudding', cat:'keychains', sub:'pudding', fandom:'nekopara', name:'Брелок-пудинг Chocola (Nekopara)',
+    desc:'Брелок в виде стаканчика шоколадного пудинга с Чоколой на крышке, на цепочке-шарике. Внутри — силиконовый сквиш: его можно достать и мять как игрушку-антистресс.',
+    preorder:{shipFrom:'с 30 ноября', limit:10, regularPrice:600},
+    variants:[{label:'Брелок', price:500}],
+    specs:[],
+    images:[{src:'img/pudding-chocola-1.jpg', alt:'Брелок-пудинг Chocola: стаканчик шоколадного пудинга с Чоколой на крышке'}] },
+  { id:'k-vanilla-pudding', cat:'keychains', sub:'pudding', fandom:'nekopara', name:'Брелок-пудинг Vanilla (Nekopara)',
+    desc:'Брелок в виде стаканчика ванильного пудинга с Ваниллой на крышке, на цепочке-шарике. Внутри — силиконовый сквиш: его можно достать и мять как игрушку-антистресс.',
+    preorder:{shipFrom:'с 30 ноября', limit:10, regularPrice:600},
+    variants:[{label:'Брелок', price:500}],
+    specs:[],
+    images:[{src:'img/pudding-vanilla-1.jpg', alt:'Брелок-пудинг Vanilla: стаканчик ванильного пудинга с Ваниллой на крышке'}] },
+  { id:'k-vanilla-nekopara', cat:'keychains', sub:'acrylic', fandom:'nekopara', name:'Брелок Vanilla (Nekopara)', desc:'',
+    preorder:{shipFrom:'с 30 ноября', limit:10, regularPrice:500},
+    variants:[{label:'6 см', price:450}],
+    specs:[['Размер','6 см'],['Материал','Акрил'],['Крепление','Голубой карабин']],
+    images:[{src:'img/keychain-vanilla-1.jpg', alt:'Акриловый брелок Vanilla из Nekopara на голубом карабине'}] },
+  { id:'k-chocola-nekopara', cat:'keychains', sub:'acrylic', fandom:'nekopara', name:'Брелок Chocola (Nekopara)', desc:'',
+    preorder:{shipFrom:'с 30 ноября', limit:10, regularPrice:500},
+    variants:[{label:'6 см', price:450}],
+    specs:[['Размер','6 см'],['Материал','Акрил'],['Крепление','Розовый карабин']],
+    images:[{src:'img/keychain-chocola-1.jpg', alt:'Акриловый брелок Chocola из Nekopara на розовом карабине'}] },
   { id:'k-beach-miku', cat:'keychains', sub:'acrylic', fandom:'miku', name:'Брелок «Пляжная Мику»', desc:'',
-    variants:[{label:'6 см', price:450}], // ЦЕНА: уточнить
+    preorder:{shipFrom:'с 30 ноября', limit:10},
+    variants:[{label:'6 см', price:450}],
     specs:[['Размер','6 см'],['Материал','Цветной «водный» акрил'],['Крепление','Металлический карабин'],['Покрытие','Защитная плёнка'],['Печать','С одной стороны']],
     images:[{src:'img/keychain-beach-miku-1.jpg', alt:'Акриловый брелок «Пляжная Мику»'},{src:'img/keychain-beach-miku-2.jpg', alt:'Брелок «Пляжная Мику», второе фото'}] },
   { id:'k-alien-miku', cat:'keychains', sub:'acrylic', fandom:'miku', name:'Брелок «Инопланетная Мику»', desc:'',
-    variants:[{label:'6 см', price:450}], // ЦЕНА: уточнить
+    preorder:{shipFrom:'с 30 ноября', limit:10},
+    variants:[{label:'6 см', price:450}],
     specs:[['Размер','6 см'],['Особенность','Светится в УФ-излучении'],['Крепление','Металлический карабин'],['Покрытие','Защитная плёнка'],['Печать','С одной стороны']],
     images:[{src:'img/keychain-alien-miku-1.jpg', alt:'Акриловый брелок «Инопланетная Мику»'},{src:'img/keychain-alien-miku-2.jpg', alt:'Брелок «Инопланетная Мику», второе фото'}] },
   { id:'k-brawl-cat', cat:'keychains', sub:'acrylic', fandom:'brawl', name:'Брелок Brawl Stars', desc:'Брелок-кошка на шнурке-ремешке.',
-    variants:[{label:'Брелок', price:350}], // ЦЕНА: уточнить
+    preorder:{shipFrom:'с 30 ноября', limit:10},
+    variants:[{label:'Брелок', price:350}],
     specs:[],
     images:[{src:'img/keychain-brawl-cat-1.jpg', alt:'Брелок Brawl Stars с кошкой на шнурке-ремешке'}] },
   { id:'k-pusheen-surprise', cat:'keychains', sub:'acrylic', fandom:'pusheen', name:'Сюрприз-пакетик Pusheen', desc:'Случайный брелок из набора.',
-    variants:[{label:'Случайный брелок', price:250}], // ЦЕНА: уточнить
+    stock:{qty:20},
+    variants:[{label:'Случайный брелок', price:300}],
     specs:[['Размер','Каждый брелок 2 см']],
     images:[{src:'img/pusheen-surprise-1.jpg', alt:'Сюрприз-пакетик Pusheen и брелоки из набора'},{src:'img/pusheen-surprise-2.jpg', alt:'Сюрприз-пакетик Pusheen, второе фото'}] },
   { id:'s-vanilla', cat:'stickers', sub:'stickerpack', fandom:'nekopara', name:'Стикерпак Vanilla (Nekopara)', desc:'',
-    variants:[{label:'Стикерпак', price:250}], // ЦЕНА: уточнить
+    stock:{qty:10},
+    variants:[{label:'Стикерпак', price:250}],
     specs:[['Размер','14,7 × 6,8 см']],
     images:[{src:'img/stickers-vanilla-1.jpg', alt:'Стикерпак Vanilla с размерами 14,7 × 6,8 см'},{src:'img/stickers-vanilla-2.jpg', alt:'Стикерпак Vanilla, второе фото'}] },
   { id:'s-chocola', cat:'stickers', sub:'stickerpack', fandom:'nekopara', name:'Стикерпак Chocola (Nekopara)', desc:'',
-    variants:[{label:'Стикерпак', price:250}], // ЦЕНА: уточнить
+    stock:{qty:10},
+    variants:[{label:'Стикерпак', price:250}],
     specs:[['Размер','14,7 × 6,8 см']],
     images:[{src:'img/stickers-chocola-1.jpg', alt:'Стикерпак Chocola (Nekopara)'}] },
   { id:'s-pusheen', cat:'stickers', sub:'stickerpack', fandom:'pusheen', name:'Стикерпак «Кошечка Пушин»', desc:'',
-    variants:[{label:'Стикерпак', price:250}], // ЦЕНА: уточнить
+    stock:{qty:10},
+    variants:[{label:'Стикерпак', price:250}],
     specs:[],
     images:[{src:'img/stickers-pusheen-1.jpg', alt:'Стикерпак «Кошечка Пушин»'}] },
+  { id:'s-cyberpunk', cat:'stickers', sub:'stickerpack', fandom:'cyberpunk', name:'Киберпанк стикерпак А5', desc:'',
+    stock:{qty:10},
+    variants:[{label:'А5', price:300}],
+    specs:[['Формат','А5'],['Покрытие','Голографическое']],
+    images:[{src:'img/stickers-cyberpunk-1.jpg', alt:'Голографический стикерпак А5 по Cyberpunk: Edgerunners с Люси и Ребеккой'}] },
+  { id:'s-chii', cat:'stickers', sub:'stickerpack', fandom:'chobits', name:'Стикерпак А6 Чии', desc:'',
+    stock:{qty:10},
+    variants:[{label:'А6', price:200}],
+    specs:[['Формат','А6']],
+    images:[{src:'img/stickers-chii-1.jpg', alt:'Стикерпак А6 с Чии из Chobits в розовых тонах'}] },
+  { id:'s-apothecary', cat:'stickers', sub:'stickerpack', fandom:'apothecary', name:'Стикерпак А6 «Монолог фармацевта»', desc:'',
+    stock:{qty:10},
+    variants:[{label:'А6', price:200}],
+    specs:[['Формат','А6']],
+    images:[{src:'img/stickers-apothecary-1.jpg', alt:'Стикерпак А6 «Монолог фармацевта» с Маомао в зелёных тонах'}] },
   { id:'s-frieren', cat:'stickers', sub:'stickerpack', fandom:'frieren', name:'Стикерпак «Фрирен, провожающая в последний путь»', desc:'',
-    variants:[{label:'Стикерпак', price:250}], // ЦЕНА: уточнить
-    specs:[],
+    stock:{qty:10},
+    variants:[{label:'Стикерпак А5', price:250}],
+    specs:[['Формат','А5']],
     images:[{src:'img/stickers-frieren-1.jpg', alt:'Стикерпак «Фрирен, провожающая в последний путь»'}] }
 ];
 
@@ -660,6 +719,15 @@ function updateBadges(){
 const visibleCats = () => Object.keys(CATS).filter(c => PRODUCTS.some(p => p.cat === c));
 const usedFandoms = () => Object.keys(FANDOMS).filter(f => PRODUCTS.some(p => p.fandom === f));
 const minPrice = p => Math.min(...p.variants.map(v => v.price));
+/* Предзаказ: { shipFrom, limit, left } или null. left — сколько ещё можно предзаказать (null — без ограничения). */
+const pre = p => p && p.preorder ? { shipFrom: p.preorder.shipFrom, limit: p.preorder.limit ?? null, left: p.preorder.left ?? (p.preorder.limit ?? null) } : null;
+/* Остаток в наличии (для товаров со stock): число или null, если не ограничено */
+const stockLeft = p => p && p.stock ? (p.stock.left ?? p.stock.qty ?? null) : null;
+/* Сколько ещё можно положить в корзину с учётом того, что уже лежит */
+const preLeft = p => { const x = pre(p); const lim = x ? x.left : stockLeft(p); if(lim == null) return Infinity; const inCart = cart.filter(c => c.id === p.id).reduce((s,c)=>s+c.qty,0); return Math.max(0, lim - inCart); };
+const soldOut = p => { const x = pre(p); return x ? x.left === 0 : stockLeft(p) === 0; };
+/* Цена с «до предзаказа»: 450 ₽ и зачёркнутая обычная цена, если она задана */
+const priceHTML = (p, price) => { const rp = pre(p) && p.preorder.regularPrice; return rub(price) + (rp && rp > price ? ` <s class="old-price">${rub(rp)}</s>` : ''); };
 const filt = { cat:'all', fandoms:new Set(), max:null, q:'', sort:'pop' };
 
 function cardHTML(p){
@@ -667,9 +735,11 @@ function cardHTML(p){
   return `<article class="card">
     <button class="card-open" type="button" data-open="${esc(p.id)}">
       <span class="ph">${photo(p,0)}</span>
+      ${pre(p) ? `<span class="pre-badge${soldOut(p) ? ' out' : ''}">${soldOut(p) ? 'Тираж разобран' : 'Предзаказ'}</span>` : soldOut(p) ? `<span class="pre-badge out">Нет в наличии</span>` : ''}
       <span class="info"><span class="nm">${esc(p.name)}</span>
         ${r.n ? `<span class="rating">${starsHTML(r.avg)} ${r.avg.toFixed(1)}</span>` : ''}
-        <span class="price mono">${from}${rub(minPrice(p))}</span>
+        <span class="price mono">${from}${priceHTML(p, minPrice(p))}</span>
+        ${pre(p) && !soldOut(p) ? `<span class="ship">Отправка ${esc(pre(p).shipFrom)}</span>` : (!pre(p) && stockLeft(p) > 0 && stockLeft(p) <= 3 ? `<span class="ship">Осталось ${stockLeft(p)} шт.</span>` : '')}
       </span>
     </button>
     <button class="fav" type="button" data-fav="${esc(p.id)}" aria-pressed="${isFav(p.id)}" aria-label="${isFav(p.id) ? 'Убрать из избранного' : 'В избранное'}: ${esc(p.name)}">${icon('heart')}</button>
@@ -786,13 +856,17 @@ function renderProduct(p, view0, vIdx, notice, tab){
     <div>
       <div class="crumbs">Мерч › ${esc(CATS[p.cat].title)}${p.fandom ? ' › ' + esc(FANDOMS[p.fandom]?.name || '') : ''}</div>
       <h2>${esc(p.name)}</h2>
-      <div class="pd-price mono" id="pdPrice">${rub(p.variants[vIdx].price)}</div>
+      <div class="pd-price mono" id="pdPrice">${priceHTML(p, p.variants[vIdx].price)}</div>
       <div class="rating">${r.n ? starsHTML(r.avg)+` ${r.avg.toFixed(1)} · ${r.n} ${plural(r.n,'отзыв','отзыва','отзывов')}` : 'Пока без отзывов'}</div>
       ${p.desc ? `<p class="muted" style="margin:14px 0 0">${esc(p.desc)}</p>` : ''}
+      ${pre(p) ? `<div class="pre-box">${soldOut(p)
+        ? `<span><b>Предзаказ закрыт:</b> весь тираж разобран.</span><span class="muted">Добавь товар в избранное — так не пропустишь, когда он появится в продаже.</span>`
+        : `<span><b>Предзаказ</b> · отправка ${esc(pre(p).shipFrom)}</span>${p.preorder.regularPrice > p.variants[vIdx].price ? `<span><b>Цена предзаказа</b> — после предзаказа будет ${rub(p.preorder.regularPrice)}.</span>` : ''}<span class="muted">Оплата сразу. Посылка уйдёт, как только товар приедет из печати${pre(p).left != null ? ` · осталось ${pre(p).left} из ${pre(p).limit}` : ''}.</span>`}</div>` : ''}
+      ${!pre(p) && stockLeft(p) != null ? `<p class="muted" style="margin:10px 0 0">${stockLeft(p) > 0 ? `В наличии: ${stockLeft(p)} шт.` : 'Сейчас нет в наличии. Добавь в избранное, чтобы не пропустить, когда появится.'}</p>` : ''}
       ${p.variants.length>1 ? `<div class="checks" style="margin-top:14px">${p.variants.map((v,i)=>`<label><input type="radio" name="variant" id="var-${i}" value="${i}" ${i===vIdx?'checked':''}>${esc(v.label)} · ${rub(v.price)}</label>`).join('')}</div>` : ''}
       <div class="buy">
         <div class="stepper" aria-label="Количество"><button type="button" id="qMinus" aria-label="Меньше">−</button><output id="qOut" class="mono">1</output><button type="button" id="qPlus" aria-label="Больше">+</button></div>
-        <button class="btn" type="button" id="addBtn">В корзину</button>
+        <button class="btn" type="button" id="addBtn" ${soldOut(p) ? 'disabled' : ''}>${soldOut(p) ? (pre(p) ? 'Тираж разобран' : 'Нет в наличии') : pre(p) ? 'Предзаказать' : 'В корзину'}</button>
         <button class="fav-lg" type="button" data-fav="${esc(p.id)}" aria-pressed="${isFav(p.id)}" aria-label="${isFav(p.id) ? 'Убрать из избранного' : 'В избранное'}: ${esc(p.name)}">${icon('heart')}</button>
       </div>
       <p class="ok-msg" id="addMsg" aria-live="polite" style="min-height:1.2em"></p>
@@ -838,16 +912,17 @@ function renderProduct(p, view0, vIdx, notice, tab){
     body.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-current', x===b));
   }));
   body.querySelectorAll('input[name="variant"]').forEach(i => i.addEventListener('change', () => {
-    document.getElementById('pdPrice').textContent = rub(p.variants[+i.value].price);
+    document.getElementById('pdPrice').innerHTML = priceHTML(p, p.variants[+i.value].price);
   }));
   body.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     body.querySelectorAll('[data-tab]').forEach(x => { const on = x===b; x.setAttribute('aria-selected', on); document.getElementById('panel-'+x.dataset.tab).hidden = !on; });
   }));
   body.querySelector('[data-fav]').addEventListener('click', e => toggleFav(e.currentTarget.dataset.fav));
-  const setQ = d => { qty = Math.min(20, Math.max(1, qty + d)); document.getElementById('qOut').textContent = qty; };
+  const setQ = d => { qty = Math.min(20, preLeft(p), Math.max(1, qty + d)); qty = Math.max(1, qty); document.getElementById('qOut').textContent = qty; };
   document.getElementById('qMinus').addEventListener('click', () => setQ(-1));
   document.getElementById('qPlus').addEventListener('click', () => setQ(1));
   document.getElementById('addBtn').addEventListener('click', () => {
+    if(preLeft(p) < qty){ document.getElementById('addMsg').textContent = preLeft(p) ? `${pre(p) ? 'По предзаказу' : 'В наличии'} осталось ${preLeft(p)} шт.` : (pre(p) ? 'Больше добавить нельзя: тираж разобран.' : 'Больше добавить нельзя: в наличии больше нет.'); return; }
     addToCart(p.id, selV(), qty);
     document.getElementById('addMsg').innerHTML = `Добавлено в корзину · <a href="#cart" id="toCartLink">перейти</a>`;
     document.getElementById('toCartLink').addEventListener('click', () => dlgP.close());
@@ -906,6 +981,14 @@ const goodsTotal = () => cartItems().reduce((s,x)=> s + byId(x.id).variants[x.v]
 const apiItems = () => cartItems().map(x => ({ id:x.id, v:x.v, qty:x.qty }));
 const THANKS = `<div class="thanks"><span>Покупая у меня мерч, ты поддерживаешь независимого художника ♡ Спасибо, что ценишь моё творчество!</span><span class="hand">— Luchikki</span></div>`;
 
+/* Пояснение для корзины и оформления, если в заказе есть предзаказ */
+function preNote(){
+  const ps = [...new Set(cartItems().map(x => byId(x.id)).filter(p => pre(p)))];
+  if(!ps.length) return '';
+  const dates = [...new Set(ps.map(p => pre(p).shipFrom))].join(', ');
+  return `<div class="note"><p><b>В заказе есть предзаказ.</b> Всю посылку отправим одной коробкой ${esc(dates)}, когда товар приедет из печати. Оплата сразу, а статус заказа будет виден в «Моём аккаунте».</p></div>`;
+}
+
 function renderCart(){
   if(view === 'checkout') return renderCheckout();
   const items = cartItems(), total = goodsTotal(), count = items.reduce((s,x)=>s+x.qty,0);
@@ -916,7 +999,7 @@ function renderCart(){
   }
   const list = items.map((x,i)=>{ const p=byId(x.id), v=p.variants[x.v]; return `<div class="ci">
       <button class="th" type="button" data-open="${esc(p.id)}" style="border:0;padding:0;cursor:pointer" aria-label="Открыть: ${esc(p.name)}">${photo(p,0,{decorative:true})}</button>
-      <div><b>${esc(p.name)}</b><small>${p.variants.length>1 ? esc(v.label)+' · ' : ''}${rub(v.price)}</small></div>
+      <div><b>${esc(p.name)}</b><small>${p.variants.length>1 ? esc(v.label)+' · ' : ''}${rub(v.price)}</small>${pre(p) ? `<small class="pre">Предзаказ · отправка ${esc(pre(p).shipFrom)}</small>` : ''}</div>
       <div class="stepper"><button type="button" data-q="${i}" data-d="-1" aria-label="Меньше: ${esc(p.name)}">−</button><output class="mono">${x.qty}</output><button type="button" data-q="${i}" data-d="1" aria-label="Больше: ${esc(p.name)}">+</button></div>
       <span class="sum mono">${rub(v.price * x.qty)}</span>
       <button class="trash" type="button" data-del="${i}" aria-label="Удалить: ${esc(p.name)}">${icon('trash')}</button>
@@ -938,11 +1021,12 @@ function renderCart(){
           <div class="muted small"><span>Доставка</span><span>на следующем шаге</span></div>
           <div class="grand"><span>К оплате</span><span class="mono">${rub(total)}</span></div>
         </div>
+        ${preNote()}
         ${tail}
         ${THANKS}
       </aside>
     </div>`;
-  const change = (i, d) => { const it = items[i]; it.qty += d; if(it.qty<=0) cart = cart.filter(x=>x!==it); saveCart(); renderCart(); };
+  const change = (i, d) => { const it = items[i]; if(d > 0 && preLeft(byId(it.id)) < d){ toast('Больше нельзя: столько не осталось.'); return; } it.qty += d; if(it.qty<=0) cart = cart.filter(x=>x!==it); saveCart(); renderCart(); };
   el.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => change(+b.dataset.q, +b.dataset.d)));
   el.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => change(+b.dataset.del, -items[+b.dataset.del].qty)));
   document.getElementById('toCheckout')?.addEventListener('click', () => { view = 'checkout'; co = null; renderCart(); window.scrollTo({top:0}); });
@@ -968,7 +1052,7 @@ function renderCheckout(){
   const lines = items.map(x => { const p = byId(x.id), v = p.variants[x.v]; return `<div><span>${esc(p.name)}${p.variants.length>1 ? ', '+esc(v.label) : ''} × ${x.qty}</span><span class="mono">${rub(v.price*x.qty)}</span></div>`; }).join('');
 
   if(!LIVE){
-    el.innerHTML = `${checkoutHead()}
+    el.innerHTML = `${checkoutHead()}${preNote()}
     <form id="coForm" novalidate>
       <div class="co-cols">
         <div class="co-card panel"><h2>Контактные данные</h2>
@@ -1008,7 +1092,7 @@ function renderCheckout(){
 
   co = co || { options:null, kind:null, choice:null, quote:null, points:null };
   const ozOn = !!config?.ozonEnabled;
-  el.innerHTML = `${checkoutHead()}
+  el.innerHTML = `${checkoutHead()}${preNote()}
     <form id="coForm" novalidate>
       <div class="co-cols">
         <div class="co-card panel"><h2>Контактные данные</h2>
@@ -1185,7 +1269,7 @@ async function showOrder(id, attempt = 0){
     return;
   }
   const dl = o.delivery.kind === 'ozon' ? 'Ozon Доставка' : 'СДЭК';
-  const period = o.delivery.periodMin ? `, срок ${o.delivery.periodMin === o.delivery.periodMax ? o.delivery.periodMin : o.delivery.periodMin+'–'+o.delivery.periodMax} дн.` : '';
+  const period = o.delivery.periodMin ? `, срок ${o.delivery.periodMin === o.delivery.periodMax ? o.delivery.periodMin : o.delivery.periodMin+'–'+o.delivery.periodMax} дн` : '';
   if(o.paid){
     cart = []; saveCart(); store.set('merch-last-order', null);
     el.innerHTML = `<div class="done-ico ok" aria-hidden="true">✓</div><h2 id="doneTitle">Спасибо, заказ оплачен!</h2>
@@ -1279,7 +1363,10 @@ async function startLive(){
   if(config){
     // Цены — с сервера, чтобы витрина и оплата никогда не расходились.
     for(const sp of config.catalog){ const p = byId(sp.id); if(!p) continue;
-      sp.variants.forEach((v,i) => { if(p.variants[i]){ p.variants[i].price = v.price; p.variants[i].ozon = v.ozon; } }); }
+      sp.variants.forEach((v,i) => { if(p.variants[i]){ p.variants[i].price = v.price; p.variants[i].ozon = v.ozon; } });
+      // Предзаказ и остаток тиража — с сервера: он знает, сколько уже продано.
+      if(sp.preorder) p.preorder = sp.preorder; else delete p.preorder;
+      if(sp.stock) p.stock = { ...(p.stock || {}), left: sp.stock.left }; }
     if(config.ozonEnabled) document.getElementById('footDelivery').textContent = 'Доставка Ozon и СДЭК · Оплата картой и СБП';
   } else toast('Сервер магазина недоступен. Каталог открыт, но заказ сейчас оформить нельзя.');
   renderAccount(); saveCart(); route();
