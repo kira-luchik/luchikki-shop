@@ -546,7 +546,8 @@ const API_BASE = 'https://api.luchikki.store';
 const CATS = {
   keychains:{ title:'Брелоки', subs:{ pudding:'Брелоки-пудинги', acrylic:'Акриловые брелоки' } },
   stickers: { title:'Стикеры', subs:{ stickerpack:'Стикерпаки' } },
-  prints:   { title:'Принты и постеры', subs:{ print:'Принты', poster:'Постеры' } }
+  prints:   { title:'Принты и постеры', subs:{ print:'Принты', poster:'Постеры' } },
+  cards:    { title:'Открытки', subs:{ postcard:'Открытки' } }
 };
 
 /* Фандомы для фильтров и плиток «Коллекции» на главной. cover — фото для плитки. */
@@ -558,7 +559,8 @@ const FANDOMS = {
   cyberpunk:{ name:'Cyberpunk: Edgerunners', cover:'img/stickers-cyberpunk-1.jpg' },
   chobits:  { name:'Chobits',      cover:'img/stickers-chii-1.jpg' },
   apothecary:{ name:'Монолог фармацевта', cover:'img/stickers-apothecary-1.jpg' },
-  brawl:    { name:'Brawl Stars',  cover:'img/keychain-brawl-cat-1.jpg' }
+  brawl:    { name:'Brawl Stars',  cover:'img/keychain-brawl-cat-1.jpg' },
+  ddlc:     { name:'Doki Doki Literature Club', cover:'img/card-ddlc-monika-1.jpg' }
 };
 
 /* specs — характеристики [название, значение]; пустые не показываются.
@@ -644,7 +646,27 @@ const PRODUCTS = [
     stock:{qty:10},
     variants:[{label:'Стикерпак А5', price:250}],
     specs:[['Формат','А5']],
-    images:[{src:'img/stickers-frieren-1.jpg', alt:'Стикерпак «Фрирен, провожающая в последний путь»'}] }
+    images:[{src:'img/stickers-frieren-1.jpg', alt:'Стикерпак «Фрирен, провожающая в последний путь»'}] },
+  { id:'c-ddlc-monika', cat:'cards', sub:'postcard', fandom:'ddlc', name:'Открытка Моника (DDLC)', desc:'',
+    stock:{qty:5},
+    variants:[{label:'Открытка', price:70}],
+    specs:[],
+    images:[{src:'img/card-ddlc-monika-1.jpg', alt:'Открытка с Моникой из Doki Doki Literature Club'}] },
+  { id:'c-ddlc-natsuki', cat:'cards', sub:'postcard', fandom:'ddlc', name:'Открытка Натсуки (DDLC)', desc:'',
+    stock:{qty:5},
+    variants:[{label:'Открытка', price:70}],
+    specs:[],
+    images:[{src:'img/card-ddlc-natsuki-1.jpg', alt:'Открытка с Натсуки из Doki Doki Literature Club'}] },
+  { id:'c-ddlc-sayori', cat:'cards', sub:'postcard', fandom:'ddlc', name:'Открытка Сайори (DDLC)', desc:'',
+    stock:{qty:5},
+    variants:[{label:'Открытка', price:70}],
+    specs:[],
+    images:[{src:'img/card-ddlc-sayori-1.jpg', alt:'Открытка с Сайори из Doki Doki Literature Club'}] },
+  { id:'c-ddlc-yuri', cat:'cards', sub:'postcard', fandom:'ddlc', name:'Открытка Юри (DDLC)', desc:'',
+    stock:{qty:5},
+    variants:[{label:'Открытка', price:70}],
+    specs:[],
+    images:[{src:'img/card-ddlc-yuri-1.jpg', alt:'Открытка с Юри из Doki Doki Literature Club'}] }
 ];
 
 /* ================== ХРАНЕНИЕ И ПОМОЩНИКИ ================== */
