@@ -122,6 +122,7 @@ main{min-height:60vh}
 .pre-badge.out{background:var(--gray-soft); color:var(--muted)}
 .old-price{font-weight:600; font-size:.78em; color:var(--muted); margin-left:4px}
 .card .ship{font-size:12px; font-weight:700; color:var(--accent-text)}
+.card .dlv{font-size:12px; color:var(--muted)}
 .pre-box{margin:14px 0 0; padding:12px 14px; border-radius:var(--r-md); background:var(--soft); font-size:14px; display:grid; gap:2px}
 .pre-box b{color:var(--accent-text)}
 .ci small.pre{display:block; color:var(--accent-text); font-weight:700}
@@ -762,6 +763,7 @@ function cardHTML(p){
         ${r.n ? `<span class="rating">${starsHTML(r.avg)} ${r.avg.toFixed(1)}</span>` : ''}
         <span class="price mono">${from}${priceHTML(p, minPrice(p))}</span>
         ${pre(p) && !soldOut(p) ? `<span class="ship">Отправка ${esc(pre(p).shipFrom)}</span>` : (!pre(p) && stockLeft(p) > 0 && stockLeft(p) <= 3 ? `<span class="ship">Осталось ${stockLeft(p)} шт.</span>` : '')}
+        ${soldOut(p) ? '' : `<span class="dlv">${esc(deliveryShort(p))}</span>`}
       </span>
     </button>
     <button class="fav" type="button" data-fav="${esc(p.id)}" aria-pressed="${isFav(p.id)}" aria-label="${isFav(p.id) ? 'Убрать из избранного' : 'В избранное'}: ${esc(p.name)}">${icon('heart')}</button>
@@ -857,8 +859,13 @@ function openProduct(id){
   if(!dlgP.open) dlgP.showModal();
   dlgP.scrollTop = 0;
 }
+/* Ozon Доставка: всё, что в наличии; предзаказ — только СДЭК (отправляем, когда тираж приедет). */
+const ozonOn = () => !LIVE || !!config?.ozonEnabled;
+const canOzon = (p, vIdx = 0) => ozonOn() && !pre(p) && (p.variants[vIdx]?.ozon ?? true);
+function deliveryShort(p){ return canOzon(p) ? 'Доставка Ozon или СДЭК' : 'Доставка только СДЭК'; }
 function deliveryText(p, vIdx){
-  if(LIVE && config?.ozonEnabled && p.variants[vIdx].ozon) return 'Ozon Доставка или СДЭК';
+  if(canOzon(p, vIdx)) return 'Можно доставить Ozon Доставкой или СДЭК до пункта выдачи';
+  if(pre(p) && ozonOn()) return 'Только СДЭК, до пункта выдачи: предзаказы Ozon не возит';
   return 'СДЭК, до пункта выдачи';
 }
 function renderProduct(p, view0, vIdx, notice, tab){
@@ -892,7 +899,7 @@ function renderProduct(p, view0, vIdx, notice, tab){
         <button class="fav-lg" type="button" data-fav="${esc(p.id)}" aria-pressed="${isFav(p.id)}" aria-label="${isFav(p.id) ? 'Убрать из избранного' : 'В избранное'}: ${esc(p.name)}">${icon('heart')}</button>
       </div>
       <p class="ok-msg" id="addMsg" aria-live="polite" style="min-height:1.2em"></p>
-      <div class="perks"><div>${icon('brush')}Авторский дизайн</div><div>${icon('truck')}Доставка СДЭК</div><div>${icon('card')}Оплата картой и СБП</div></div>
+      <div class="perks"><div>${icon('brush')}Авторский дизайн</div><div>${icon('truck')}${esc(canOzon(p, vIdx) ? 'Доставка Ozon или СДЭК' : 'Доставка СДЭК')}</div><div>${icon('card')}Оплата картой и СБП</div></div>
     </div>
     <div class="ptabs">
       <div class="tablist" role="tablist" aria-label="О товаре">${tabs.map(([k,t]) => `<button type="button" role="tab" id="tab-${k}" aria-controls="panel-${k}" aria-selected="${k===tab}" data-tab="${k}">${esc(t)}</button>`).join('')}</div>
