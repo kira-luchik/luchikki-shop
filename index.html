@@ -218,6 +218,14 @@ dialog::backdrop{background:rgba(58,37,50,.5)}
 .field textarea{min-height:90px; resize:vertical}
 .hp{position:absolute; left:-10000px; width:1px; height:1px; overflow:hidden}
 .err{color:var(--accent-text); font-size:13px; font-weight:700; min-height:1em; margin:0}
+.promo{display:grid; gap:6px; font-size:14px; font-weight:700}
+.promo-row{display:flex; gap:8px}
+.promo-row input{flex:1; min-width:0; background:var(--surface); border:1.5px solid var(--line); border-radius:var(--r-sm); padding:11px 14px; font-weight:700; text-transform:uppercase; letter-spacing:.04em}
+.promo-row input:focus{outline:none; border-color:var(--accent)}
+.promo-row .btn{padding:10px 18px}
+.promo-msg{font-size:13px; margin:0; min-height:1em}
+.promo-msg.ok{color:var(--ok)} .promo-msg.bad{color:var(--accent-text)}
+.sum-rows .disc{color:var(--ok); font-weight:700}
 
 /* cart */
 .cart-layout{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:24px; align-items:start}
@@ -682,6 +690,7 @@ let serverReviews = [];                                  // с сервера: �
 let cart = store.get('merch-cart-v1', []).filter(x => byId(x.id) && byId(x.id).variants[x.v] && x.qty > 0);
 let favs = store.get('merch-favs-v1', []).filter(id => byId(id));
 let config = null, me = null;
+let promo = null;   // применённый промокод: { code, percent, discountKop, until, onlyInStock }
 
 const rub = n => n.toLocaleString('ru-RU') + ' ₽';
 const rubK = k => (k/100).toLocaleString('ru-RU', {minimumFractionDigits: k%100 ? 2 : 0, maximumFractionDigits:2}) + ' ₽';
@@ -1142,6 +1151,12 @@ function renderCheckout(){
         <button class="btn ghost" type="button" id="backToCart">← Назад в корзину</button>
         <div class="co-pay panel" style="padding:20px">
           <div class="sum-rows">${lines}</div>
+          <div class="promo">
+            <label for="promoIn">Промокод</label>
+            <div class="promo-row"><input id="promoIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" value="${esc(promo?.code || '')}" placeholder="Если есть">
+              <button class="btn ghost" type="button" id="promoBtn">${promo ? 'Убрать' : 'Применить'}</button></div>
+            <p class="promo-msg ${promo ? 'ok' : ''}" id="promoMsg" aria-live="polite">${promo ? esc(promoText(promo)) : ''}</p>
+          </div>
           <div class="sum-rows" id="sumBox" aria-live="polite"></div>
           <p class="err" id="coMsg" aria-live="polite"></p>
           <button class="btn block" type="submit" id="payBtn" disabled>Перейти к оплате</button>
@@ -1154,8 +1169,11 @@ function renderCheckout(){
   el.querySelectorAll('input[name="dk"]').forEach(r => r.addEventListener('change', () => selectKind(r.value)));
   document.getElementById('coForm').addEventListener('input', updateSteps);
   document.getElementById('coForm').addEventListener('submit', submitOrder);
+  document.getElementById('promoBtn').addEventListener('click', () => promo ? clearPromo() : applyPromoCode());
+  document.getElementById('promoIn').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); if(!promo) applyPromoCode(); } });
   renderSum();
   loadOptions();
+  if(promo) applyPromoCode(promo.code, true); // корзина могла измениться — пересчитаем скидку
   if(co.kind) selectKind(co.kind);
 }
 
@@ -1247,7 +1265,7 @@ async function requestQuote(){
   const msg = document.getElementById('coMsg'); msg.textContent = '';
   co.quote = null; renderSum(true);
   try{
-    co.quote = await api('/api/delivery/quote', { method:'POST', body:{ items: apiItems(), delivery: co.choice } });
+    co.quote = await api('/api/delivery/quote', { method:'POST', body:{ items: apiItems(), delivery: co.choice, promo: promo?.code } });
     const priceEl = document.getElementById(co.kind === 'ozon' ? 'priceOzon' : 'priceCdek');
     if(priceEl) priceEl.textContent = rubK(co.quote.deliveryKop);
   }catch(e){ msg.textContent = e.message; if(e.code === 'login_required'){ me = null; renderAccount(); } }
@@ -1256,14 +1274,44 @@ async function requestQuote(){
 
 function renderSum(loading){
   const box = document.getElementById('sumBox'); if(!box) return;
-  const q = co?.quote, goodsKop = q ? q.goodsKop : goodsTotal()*100;
+  const q = co?.quote, fullKop = goodsTotal()*100;
+  const discKop = q ? Math.max(0, (q.fullGoodsKop ?? q.goodsKop) - q.goodsKop) : (promo?.discountKop || 0);
   const period = q && q.periodMin ? (q.periodMin === q.periodMax ? `${q.periodMin} дн.` : `${q.periodMin}–${q.periodMax} дн.`) : '';
-  box.innerHTML = `<div><span>Товары</span><span class="mono">${rubK(goodsKop)}</span></div>
+  box.innerHTML = `<div><span>Товары</span><span class="mono">${rubK(q ? (q.fullGoodsKop ?? q.goodsKop) : fullKop)}</span></div>
+    ${discKop ? `<div class="disc"><span>Промокод ${esc(promo?.code || '')}</span><span class="mono">−${rubK(discKop)}</span></div>` : ''}
     <div><span>Доставка${period ? ' · '+period : ''}</span><span class="mono">${q ? rubK(q.deliveryKop) : (loading ? 'считаем…' : 'выберите пункт')}</span></div>
     <div class="grand"><span>Итого</span><span class="mono">${q ? rubK(q.totalKop) : '—'}</span></div>`;
   const btn = document.getElementById('payBtn');
   if(btn){ btn.disabled = !q; btn.innerHTML = q ? `Перейти к оплате · <span class="mono">${rubK(q.totalKop)}</span>` : 'Перейти к оплате'; }
   updateSteps();
+}
+
+/* ================== ПРОМОКОД ================== */
+const promoText = p => `−${p.percent}%${p.onlyInStock ? ' на товары в наличии' : ''} · скидка ${rubK(p.discountKop)}, действует до ${new Date(p.until).toLocaleDateString('ru-RU', { day:'numeric', month:'long' })}`;
+async function applyPromoCode(code, silent){
+  const inp = document.getElementById('promoIn'), msg = document.getElementById('promoMsg'), btn = document.getElementById('promoBtn');
+  code = (code || inp?.value || '').trim();
+  if(!code){ if(msg){ msg.className = 'promo-msg bad'; msg.textContent = 'Введите промокод.'; } return; }
+  if(btn) btn.disabled = true;
+  try{
+    promo = await api('/api/promo', { method:'POST', body:{ code, items: apiItems() } });
+    if(inp) inp.value = promo.code;
+    if(msg){ msg.className = 'promo-msg ok'; msg.textContent = promoText(promo); }
+    if(btn) btn.textContent = 'Убрать';
+  }catch(e){
+    promo = null;
+    if(msg){ msg.className = 'promo-msg bad'; msg.textContent = e.message; }
+    if(btn) btn.textContent = 'Применить';
+    if(silent && inp) inp.value = '';
+  }
+  if(btn) btn.disabled = false;
+  if(co?.choice) requestQuote(); else renderSum();
+}
+function clearPromo(){
+  promo = null;
+  const inp = document.getElementById('promoIn'), msg = document.getElementById('promoMsg'), btn = document.getElementById('promoBtn');
+  if(inp) inp.value = ''; if(msg){ msg.className = 'promo-msg'; msg.textContent = ''; } if(btn) btn.textContent = 'Применить';
+  if(co?.choice) requestQuote(); else renderSum();
 }
 
 async function submitOrder(e){
@@ -1275,7 +1323,7 @@ async function submitOrder(e){
   if(!co.choice || !co.quote){ msg.textContent = 'Выберите способ и пункт доставки.'; return; }
   btn.disabled = true; btn.textContent = 'Создаём заказ…'; msg.textContent = '';
   try{
-    const r = await api('/api/orders', { method:'POST', body:{ items: apiItems(), name, email, delivery: co.choice } });
+    const r = await api('/api/orders', { method:'POST', body:{ items: apiItems(), name, email, delivery: co.choice, promo: promo?.code } });
     store.set('merch-last-order', r.orderId);
     location.href = r.confirmationUrl;   // страница оплаты ЮKassa
   }catch(ex){
